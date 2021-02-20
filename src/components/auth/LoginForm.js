@@ -6,7 +6,7 @@ import validate from 'validate.js';
 import { extractValuesFromFields } from '../../utils';
 import useHandleLogin from './useHandleLogin';
 
-const LoginForm = () => {
+const LoginForm = ({ onLoadingStateChange }) => {
   const { error, doLogin } = useHandleLogin();
 
   const [fields, setFormState] = useState({
@@ -38,8 +38,10 @@ const LoginForm = () => {
     password: { length: { minimum: 5 } },
   });
 
-  const handlePressLogin = () => {
-    doLogin(fields.username.value, fields.password.value);
+  const handlePressLogin = async () => {
+    onLoadingStateChange(true);
+    await doLogin(fields.username.value, fields.password.value);
+    onLoadingStateChange(false);
   };
 
   return (

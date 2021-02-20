@@ -1,5 +1,10 @@
-import React, { useContext, useEffect } from 'react';
-import { StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import { Button } from 'react-native-elements';
 import { AuthContext } from '../contexts/AuthContext';
@@ -7,10 +12,12 @@ import LoginForm from '../components/auth/LoginForm';
 import { getCurrentUser } from '../api/auth';
 
 const Login = ({ navigation }) => {
-  const { setAuth, isLoggedIn } = useContext(AuthContext);
+  const { setAuth } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const getToken = async () => {
+      setLoading(true);
       const userToken = await AsyncStorage.getItem('userToken');
 
       if (userToken) {
@@ -25,23 +32,25 @@ const Login = ({ navigation }) => {
 
         setAuth(user, userToken);
       }
+      setLoading(false);
     };
 
     getToken();
   }, []);
-
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    navigation.navigate('Home');
-  }, [isLoggedIn]);
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <LoginForm />
+      {loading && (
+        <ActivityIndicator
+          size="large"
+          style={styles.activityIndicator}
+          color="#FFFFFF"
+        />
+      )}
+      <LoginForm onLoadingStateChange={setLoading} />
       <Button
         style={styles.noAccountButton}
         titleStyle={styles.noAccountButtonText}
@@ -54,8 +63,20 @@ const Login = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  activityIndicator: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+    backgroundColor: '#000000AA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
+    position: 'relative',
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',

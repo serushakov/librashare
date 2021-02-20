@@ -24,5 +24,6 @@ module.exports = {
     'arrow-body-style': 0,
     'react/style-prop-object': 0,
     'object-curly-new-line': 0,
+    'react/display-name': 0,
   },
 };

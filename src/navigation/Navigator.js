@@ -1,20 +1,29 @@
 import { createStackNavigator } from '@react-navigation/stack';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import React, { useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import Login from '../views/Login';
 import Register from '../views/Register';
+import BottomTabsNavigator from './BottomTabsNavigator';
 
 const Stack = createStackNavigator();
+
+const Theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: 'rgb(232,100,104)',
+  },
+};
 
 const Navigator = () => {
   const { isLoggedIn } = useContext(AuthContext);
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
+    <NavigationContainer theme={Theme}>
+      <Stack.Navigator headerMode="none">
         {isLoggedIn ? (
-          <></>
+          <Stack.Screen name="Main" component={BottomTabsNavigator} />
         ) : (
           <>
             <Stack.Screen name="Login" component={Login} />

@@ -1,10 +1,23 @@
 module.exports = {
-  extends: ["airbnb-base", "plugin:prettier/recommended"],
-  plugins: ["prettier"],
-  parserOptions: {
-    ecmaVersion: 2018,
+  env: {
+    'react-native/react-native': true,
+    es2021: true,
   },
+  extends: [
+    'plugin:react/recommended',
+    'plugin:prettier/recommended',
+    'airbnb',
+  ],
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: 12,
+    sourceType: 'module',
+  },
+  plugins: ['react', 'prettier', 'react-native'],
   rules: {
-    "prettier/prettier": "error",
+    'react/jsx-filename-extension': 0,
+    'react/prop-types': 0,
   },
 };

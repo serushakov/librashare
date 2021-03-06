@@ -11,15 +11,15 @@ const PostItem = ({
   style,
 }) => {
   return (
-    // <Card key={id} containerStyle={styles.card}>
     <View style={{ ...styles.card, ...style }}>
       <Card.Image source={{ uri: imageUrl }} style={styles.image} />
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.author}>{author}</Text>
-      <Text style={styles.description}>{description}</Text>
+      <Text style={styles.description} numberOfLines={3} ellipsizeMode="tail">
+        {description}
+      </Text>
       <Text style={styles.distance}>{`${distance} km`}</Text>
     </View>
-    // {/* </Card> */}
   );
 };
 

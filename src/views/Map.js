@@ -2,20 +2,16 @@ import MapView, { Marker, AnimatedRegion } from 'react-native-maps';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Carousel, { Pagination } from 'react-native-snap-carousel';
-import { Button, Card } from 'react-native-elements';
-import BottomSheet, {
-  BottomSheetModal,
-  BottomSheetModalProvider,
-} from '@gorhom/bottom-sheet';
-import Animated, { color, Easing } from 'react-native-reanimated';
+import BottomSheet from '@gorhom/bottom-sheet';
 import PostItem from '../components/PostItem';
 
 const Map = () => {
   const [userLocation, setUserLocation] = useState();
   const [currentActive, setCurrentActive] = useState(0);
-
-  const [carouselHeight, setCarouselHeight] = useState(0);
-  const [paginationHeight, setPaginationHeight] = useState(0);
+  const mapRef = useRef(null);
+  const carouselRef = useRef(null);
+  const bottomSheet = useRef();
+  const [showCards, setShowCards] = useState(false);
 
   const markers = useMemo(() => {
     if (!userLocation) return [];
@@ -42,9 +38,6 @@ const Map = () => {
     }),
   ).current;
 
-  const mapRef = useRef(null);
-  const carouselRef = useRef(null);
-
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -53,19 +46,6 @@ const Map = () => {
     );
   }, [markers]);
 
-  const carouselY = useRef(new Animated.Value(1000)).current;
-
-  const [showCards, setShowCards] = useState(false);
-
-  useEffect(() => {
-    Animated.spring(carouselY, {
-      stiffness: 200,
-      damping: 30,
-      mass: 1,
-      toValue: showCards ? 0 : 1000,
-    }).start();
-  }, [showCards]);
-
   const fitMapToCurrentMarker = () => {
     if (typeof currentActive !== 'number') return;
 
@@ -73,7 +53,6 @@ const Map = () => {
 
     if (!item) return;
 
-    // carouselRef.current.snapToItem(currentActive, true);
     mapRef.current.fitToCoordinates(
       [
         item,
@@ -95,8 +74,6 @@ const Map = () => {
   };
 
   useEffect(fitMapToCurrentMarker, [currentActive]);
-
-  const bottomSheet = useRef();
 
   const fitMapToMarkers = () => {
     mapRef.current.fitToCoordinates(
@@ -130,8 +107,6 @@ const Map = () => {
       fitMapToMarkers();
     }
   }, [showCards]);
-
-  console.log(carouselHeight + paginationHeight);
 
   return (
     <View style={styles.root}>
@@ -176,47 +151,39 @@ const Map = () => {
       </MapView.Animated>
 
       <BottomSheet
-        snapPoints={useMemo(
-          () => [-1, carouselHeight + paginationHeight || 400],
-          [carouselHeight, paginationHeight],
-        )}
+        snapPoints={useMemo(() => [-1, 380], [])}
         ref={bottomSheet}
-        // containerHeight={400}
         animateOnMount
         style={styles.carousel}
         onAnimate={onBottomSheetChange}
       >
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Carousel
             ref={carouselRef}
-            layout="default"
+            layout="stack"
             data={markers}
             sliderWidth={Dimensions.get('screen').width}
             itemWidth={Dimensions.get('screen').width}
             onBeforeSnapToItem={(index) => setCurrentActive(index)}
-            // onLayout={(event) =>
-            //   setCarouselHeight(event.nativeEvent.layout.height)
-            // }
-            renderItem={({ item, index }) => {
+            renderItem={({ index }) => {
               return (
                 <PostItem
                   style={styles.card}
                   title="Around the world in 80 days"
                   author="Jules Verne"
                   imageUrl="https://i.pinimg.com/originals/53/b0/0d/53b00dbc113138aa4c4aad36ddea5f73.jpg"
-                  description="Book is in good condition, bought a year ago. Looking to exchange for other Jules Verne books"
+                  description="Book is in good condition, bought a year ago. Looking to exchange for other Jules Verne booksBook is in good condition, bought a year ago. Looking to exchange for other Jules Verne booksBook is in good condition, bought a year ago. Looking to exchange for other Jules Verne books"
                   distance="2.3"
                   id={index}
                 />
               );
             }}
           />
-          <View
-          // onLayout={(event) =>
-          //   setPaginationHeight(event.nativeEvent.layout.height)
-          // }
-          >
+          <View>
             <Pagination
+              tappableDots
+              carouselRef={carouselRef}
+              containerStyle={{ paddingVertical: 16 }}
               dotsLength={markers.length}
               activeDotIndex={currentActive ?? -1}
             />

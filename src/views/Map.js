@@ -1,13 +1,13 @@
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import Carousel from 'react-native-snap-carousel';
-import { Card } from 'react-native-elements';
-import { max } from 'react-native-reanimated';
+import { Button, Card } from 'react-native-elements';
+import Animated, { Easing } from 'react-native-reanimated';
 
 const Map = () => {
   const [userLocation, setUserLocation] = useState();
-  const [currentActive, setCurrentActive] = useState(0);
+  const [currentActive, setCurrentActive] = useState(null);
 
   const markers = useMemo(() => {
     if (!userLocation) return [];
@@ -34,56 +34,67 @@ const Map = () => {
     }),
   ).current;
 
+  const mapRef = useRef(null);
+  const carouselRef = useRef(null);
+
   useEffect(() => {
+    if (!mapRef.current) return;
+
+    mapRef.current.fitToCoordinates(
+      markers.map((item) => ({ latitude: item.lat, longitude: item.lon })),
+    );
+  }, [markers]);
+
+  const carouselY = useRef(new Animated.Value(100)).current;
+
+  const [showCards, setShowCards] = useState(false);
+
+  useEffect(() => {
+    Animated.spring(carouselY, {
+      stiffness: 200,
+      damping: 30,
+      mass: 1,
+      toValue: showCards ? 0 : 100,
+    }).start();
+  }, [showCards]);
+
+  useEffect(() => {
+    if (typeof currentActive !== 'number') return;
+
     const item = markers[currentActive];
 
     if (!item) return;
 
-    region
-      .spring({
-        latitude: item.lat,
-        longitude: item.lon,
-        latitudeDelta: 0.5,
-        longitudeDelta: 0.5,
-        useNativeDriver: false,
-        damping: 20,
-      })
-      .start();
-  }, [currentActive]);
+    carouselRef.current.snapToItem(currentActive, true);
+    mapRef.current.fitToCoordinates(
+      [
+        item,
+        { lat: item.lat - 0.008, lon: item.lon - 0.008 },
+        { lat: item.lat + 0.008, lon: item.lon + 0.008 },
+      ].map((coordinate) => ({
+        latitude: coordinate.lat,
+        longitude: coordinate.lon,
+      })),
+      {
+        edgePadding: {
+          top: 16,
+          bottom: 200,
+          left: 16,
+          right: 16,
+        },
+      },
+    );
+  }, [currentActive, showCards]);
 
   return (
     <View style={styles.root}>
-      <View style={styles.carousel}>
+      <Animated.View
+        style={{ ...styles.carousel, transform: [{ translateY: carouselY }] }}
+      >
         <Carousel
+          ref={carouselRef}
+          layout="tinder"
           data={markers}
-          onScroll={(e) => {
-            const { nativeEvent } = e;
-            const itemWidth = nativeEvent.layoutMeasurement.width;
-
-            const itemIndex = Math.round(
-              nativeEvent.contentOffset.x / itemWidth,
-            );
-
-            const a =
-              Math.abs(nativeEvent.contentOffset.x / itemWidth - itemIndex) +
-              0.5;
-
-            const item =
-              markers[Math.max(Math.min(itemIndex, markers.length - 1), 0)];
-            // region.stopAnimation();
-
-            // region
-            //   .timing({
-            //     longitudeDelta: a,
-            //     latitudeDelta: a,
-            //     latitude: item.lat,
-            //     longitude: item.lon,
-            //     useNativeDriver: false,
-            //     duration: 0,
-            //     isInteraction: true,
-            //   })
-            //   .start();
-          }}
           sliderWidth={Dimensions.get('screen').width}
           itemWidth={Dimensions.get('screen').width}
           onBeforeSnapToItem={(index) => setCurrentActive(index)}
@@ -95,10 +106,30 @@ const Map = () => {
             );
           }}
         />
-      </View>
+      </Animated.View>
+
       <MapView.Animated
-        style={styles.map}
+        ref={mapRef}
         region={region}
+        style={styles.map}
+        mapPadding={{
+          top: 16,
+          bottom: 16,
+          left: 16,
+          right: 16,
+        }}
+        onPress={(event) => {
+          if (event.nativeEvent.action === 'marker-press') return;
+          mapRef.current.fitToCoordinates(
+            markers.map((item) => ({
+              latitude: item.lat,
+              longitude: item.lon,
+            })),
+          );
+          setCurrentActive(null);
+          setShowCards(false);
+        }}
+        onRegionChange={(newRegion) => region.setValue(newRegion)}
         onUserLocationChange={(e) => {
           setUserLocation(
             (current) =>
@@ -111,11 +142,14 @@ const Map = () => {
         showsUserLocation
         showsMyLocationButton
       >
-        {markers.map((item) => (
+        {markers.map((item, index) => (
           <Marker
             key={`${item.lat}${item.lon}`}
-            title={item.title}
             coordinate={{ latitude: item.lat, longitude: item.lon }}
+            onPress={() => {
+              setShowCards(true);
+              setCurrentActive(index);
+            }}
           />
         ))}
       </MapView.Animated>
@@ -132,6 +166,12 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
+  },
+  button: {
+    position: 'absolute',
+    bottom: 100,
+    right: 16,
+    zIndex: 100,
   },
   card: {
     flex: 1,

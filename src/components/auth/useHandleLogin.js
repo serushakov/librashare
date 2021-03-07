@@ -12,18 +12,18 @@ const useHandleLogin = () => {
     async (username, password) => {
       setError(null);
 
-      const response = await postLogin(username, password);
+      try {
+        const response = await postLogin(username, password);
 
-      const { token, user, message } = await response.json();
+        const { token, user } = response.data;
 
-      if (response.status !== 200) {
-        setError(message);
-      }
+        if (token && user) {
+          setAuth(user, token);
 
-      if (token && user) {
-        setAuth(user, token);
-
-        await AsyncStorage.setItem('userToken', token);
+          await AsyncStorage.setItem('userToken', token);
+        }
+      } catch (requestError) {
+        setError(requestError.message);
       }
     },
     [setAuth],

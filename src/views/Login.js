@@ -25,6 +25,8 @@ const Login = ({ navigation }) => {
 
         if (response.status !== 200) {
           setAuth(null, null);
+          setLoading(false);
+
           return;
         }
 
@@ -32,8 +34,8 @@ const Login = ({ navigation }) => {
 
         setAuth(user, userToken);
       }
-      setLoading(false);
     };
+    setLoading(false);
 
     getToken();
   }, []);

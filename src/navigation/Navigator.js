@@ -21,16 +21,18 @@ const Navigator = () => {
 
   return (
     <NavigationContainer theme={Theme}>
-      <Stack.Navigator headerMode="none">
-        {isLoggedIn ? (
+      {isLoggedIn ? (
+        <Stack.Navigator headerMode="none">
           <Stack.Screen name="Main" component={BottomTabsNavigator} />
-        ) : (
+        </Stack.Navigator>
+      ) : (
+        <Stack.Navigator>
           <>
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Register" component={Register} />
           </>
-        )}
-      </Stack.Navigator>
+        </Stack.Navigator>
+      )}
     </NavigationContainer>
   );
 };

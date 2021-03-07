@@ -40,7 +40,6 @@ const Map = () => {
 
   useEffect(() => {
     if (!mapRef.current) return;
-
     mapRef.current.fitToCoordinates(
       markers.map((item) => ({ latitude: item.lat, longitude: item.lon })),
     );
@@ -85,13 +84,7 @@ const Map = () => {
   };
 
   const onBottomSheetChange = (prevIndex, index) => {
-    if (index === 0) {
-      fitMapToMarkers();
-    }
-
-    if (index === 1) {
-      fitMapToCurrentMarker();
-    }
+    setShowCards(index === 1);
   };
 
   useEffect(() => {
@@ -156,6 +149,7 @@ const Map = () => {
         animateOnMount
         style={styles.carousel}
         onAnimate={onBottomSheetChange}
+        onChange={(index) => onBottomSheetChange(-1, index)}
       >
         <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Carousel

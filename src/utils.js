@@ -19,4 +19,4 @@ export const extractImageMimeType = (filename) => {
   return mimetype;
 };
 
-export const appIdentifier = 'af411fdc-a636-4237-ab4b-25b94267c7f8';
+export const appIdentifier = '64c5dc8f-44df-44f8-be7f-6ac77e035cb3';

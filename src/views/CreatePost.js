@@ -7,15 +7,23 @@ import {
   ScrollView,
   StatusBar,
   Dimensions,
+  Text,
 } from 'react-native';
-import { Button, Image, Input } from 'react-native-elements';
+import {
+  Button,
+  Image,
+  Input,
+  useTheme,
+  withTheme,
+} from 'react-native-elements';
 import validate from 'validate.js';
 import * as ImagePicker from 'expo-image-picker';
 import { useHeaderHeight } from '@react-navigation/stack';
-
+import LocationPicker from '../components/LocationPicker';
 import { AuthContext } from '../contexts/AuthContext';
 import { postMedia, postTagMedia } from '../api/media';
 import { appIdentifier } from '../utils';
+import MapView, { Marker } from 'react-native-maps';
 
 const defaultFieldState = {
   touched: false,
@@ -120,7 +128,7 @@ const validator = (title, description, image) =>
     },
   );
 
-const CreatePost = ({ navigation }) => {
+const CreatePost = ({ navigation, theme }) => {
   const {
     fields,
     handleFieldBlur,
@@ -128,6 +136,8 @@ const CreatePost = ({ navigation }) => {
     clear: clearFields,
   } = useFields();
   const { image, pickImage, clear: clearImage } = useImagePicker();
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [location, setLocation] = useState();
 
   const { uploadMedia, loading, data } = useUploadMedia();
 
@@ -195,6 +205,32 @@ const CreatePost = ({ navigation }) => {
               value={fields.description.value}
             />
 
+            <View style={styles.locationContainer}>
+              <Text style={{ ...styles.fieldLabel, color: theme.colors.grey3 }}>
+                Location
+              </Text>
+
+              {location ? (
+                <MapView
+                  onPress={() => setShowLocationPicker(true)}
+                  region={{
+                    latitude: location.latitude,
+                    latitudeDelta: 0.005,
+                    longitude: location.longitude,
+                    longitudeDelta: 0.005,
+                  }}
+                  style={styles.map}
+                >
+                  <Marker coordinate={location} />
+                </MapView>
+              ) : (
+                <Button
+                  title="Choose location"
+                  onPress={() => setShowLocationPicker(true)}
+                />
+              )}
+            </View>
+
             <Button
               disabled={!!errors}
               title="Upload"
@@ -205,6 +241,15 @@ const CreatePost = ({ navigation }) => {
           </View>
         </KeyboardAvoidingView>
       </ScrollView>
+      <LocationPicker
+        show={showLocationPicker}
+        location={location}
+        onCancel={() => setShowLocationPicker(false)}
+        onDone={(newLocation) => {
+          setShowLocationPicker(false);
+          setLocation(newLocation);
+        }}
+      />
     </View>
   );
 };
@@ -232,6 +277,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(32, 33, 37, 0.4)',
   },
+
+  locationContainer: {
+    flex: 1,
+    width: '100%',
+    paddingHorizontal: 10,
+    marginBottom: 16,
+  },
+
+  map: {
+    height: 100,
+    borderRadius: 8,
+  },
+  fieldLabel: {
+    fontWeight: '600',
+    fontSize: 16,
+    marginBottom: 16,
+  },
 });
 
-export default CreatePost;
+export default withTheme(CreatePost);

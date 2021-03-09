@@ -9,21 +9,15 @@ import {
   Dimensions,
   Text,
 } from 'react-native';
-import {
-  Button,
-  Image,
-  Input,
-  useTheme,
-  withTheme,
-} from 'react-native-elements';
+import { Button, Image, Input, withTheme } from 'react-native-elements';
 import validate from 'validate.js';
 import * as ImagePicker from 'expo-image-picker';
 import { useHeaderHeight } from '@react-navigation/stack';
+import MapView, { Marker } from 'react-native-maps';
 import LocationPicker from '../components/LocationPicker';
 import { AuthContext } from '../contexts/AuthContext';
 import { postMedia, postTagMedia } from '../api/media';
 import { appIdentifier } from '../utils';
-import MapView, { Marker } from 'react-native-maps';
 
 const defaultFieldState = {
   touched: false,
@@ -100,18 +94,18 @@ const useUploadMedia = () => {
       await postTagMedia(response.data.file_id, appIdentifier, token);
 
       setLoading(false);
-    } catch (error) {
+    } catch (e) {
       setLoading(false);
-      setError(error);
+      setError(e);
     }
   };
 
   return { uploadMedia, error, loading, data };
 };
 
-const validator = (title, description, image) =>
+const validator = (title, description, author, image, location) =>
   validate(
-    { title, description, image },
+    { title, description, author, image, location },
     {
       title: {
         presence: { allowEmpty: false },
@@ -123,6 +117,9 @@ const validator = (title, description, image) =>
         presence: { allowEmpty: false },
       },
       image: {
+        presence: { allowEmpty: false },
+      },
+      location: {
         presence: { allowEmpty: false },
       },
     },
@@ -145,11 +142,17 @@ const CreatePost = ({ navigation, theme }) => {
     if (!loading && data) {
       clearFields();
       clearImage();
-      navigation.navigate('Home');
+      navigation.navigate('Map');
     }
   }, [loading, data]);
 
-  const errors = validator(fields.title.value, fields.description.value, image);
+  const errors = validator(
+    fields.title.value,
+    fields.description.value,
+    fields.author.value,
+    image,
+    location,
+  );
 
   return (
     <View style={styles.container}>
@@ -215,9 +218,9 @@ const CreatePost = ({ navigation, theme }) => {
                   onPress={() => setShowLocationPicker(true)}
                   region={{
                     latitude: location.latitude,
-                    latitudeDelta: 0.005,
+                    latitudeDelta: 0.003,
                     longitude: location.longitude,
-                    longitudeDelta: 0.005,
+                    longitudeDelta: 0.003,
                   }}
                   style={styles.map}
                 >
@@ -234,9 +237,15 @@ const CreatePost = ({ navigation, theme }) => {
             <Button
               disabled={!!errors}
               title="Upload"
-              onPress={() =>
-                uploadMedia(fields.title.value, fields.description.value, image)
-              }
+              onPress={() => {
+                const description = JSON.stringify({
+                  description: fields.description.value,
+                  author: fields.author.value,
+                  location,
+                });
+
+                uploadMedia(fields.title.value, description, image);
+              }}
             />
           </View>
         </KeyboardAvoidingView>

@@ -1,5 +1,5 @@
 export const getImageUrl = (fileName) =>
-  `http://media.mw.metropolia.fi/wbma/uploads/${fileName}`;
+  `http://media-new.mw.metropolia.fi/wbma/uploads/${fileName}`;
 
 export const extractValuesFromFields = (fields) =>
   Object.fromEntries(

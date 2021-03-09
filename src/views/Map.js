@@ -1,33 +1,19 @@
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
-import Carousel, { Pagination } from 'react-native-snap-carousel';
-import BottomSheet from '@gorhom/bottom-sheet';
-import PostItem from '../components/PostItem';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import usePosts from '../hooks/usePosts';
+import MapBottomSheet from '../components/MapBottomSheet';
 
 const Map = () => {
   const [userLocation, setUserLocation] = useState();
+  const [mapReady, setMapReady] = useState(false);
   const [currentActive, setCurrentActive] = useState(0);
   const mapRef = useRef(null);
-  const carouselRef = useRef(null);
-  const bottomSheet = useRef();
   const [showCards, setShowCards] = useState(false);
 
-  const markers = useMemo(() => {
-    if (!userLocation) return [];
+  const { data, isLoading, isError } = usePosts();
 
-    return new Array(10).fill(0).map((_item, index) => {
-      return {
-        lat:
-          userLocation.latitude +
-          Math.random() * 0.5 * (Math.random() < 0.5 ? -1 : 1),
-        lon:
-          userLocation.longitude +
-          Math.random() * 0.5 * (Math.random() < 0.5 ? -1 : 1),
-        title: `Marker ${index}`,
-      };
-    });
-  }, [userLocation]);
+  const markers = data;
 
   const region = useRef(
     new AnimatedRegion({
@@ -39,11 +25,27 @@ const Map = () => {
   ).current;
 
   useEffect(() => {
-    if (!mapRef.current) return;
-    mapRef.current.fitToCoordinates(
-      markers.map((item) => ({ latitude: item.lat, longitude: item.lon })),
-    );
-  }, [markers]);
+    if (!mapRef.current || !mapReady || !userLocation) return;
+
+    if (markers.length === 0 && userLocation) {
+      region
+        .timing({
+          useNativeDriver: false,
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        })
+        .start();
+    } else {
+      mapRef.current.fitToCoordinates([
+        ...markers.map((item) => ({
+          ...item.location,
+        })),
+        userLocation,
+      ]);
+    }
+  }, [markers, mapReady, !!userLocation]);
 
   const fitMapToCurrentMarker = () => {
     if (typeof currentActive !== 'number') return;
@@ -54,13 +56,16 @@ const Map = () => {
 
     mapRef.current.fitToCoordinates(
       [
-        item,
-        { lat: item.lat - 0.008, lon: item.lon - 0.008 },
-        { lat: item.lat + 0.008, lon: item.lon + 0.008 },
-      ].map((coordinate) => ({
-        latitude: coordinate.lat,
-        longitude: coordinate.lon,
-      })),
+        item.location,
+        {
+          latitude: item.location.latitude - 0.008,
+          longitude: item.location.longitude - 0.008,
+        },
+        {
+          latitude: item.location.latitude + 0.008,
+          longitude: item.location.longitude + 0.008,
+        },
+      ],
       {
         edgePadding: {
           top: 16,
@@ -77,33 +82,26 @@ const Map = () => {
   const fitMapToMarkers = () => {
     mapRef.current.fitToCoordinates(
       markers.map((item) => ({
-        latitude: item.lat,
-        longitude: item.lon,
+        latitude: item.location.latitude,
+        longitude: item.location.longitude,
       })),
     );
   };
 
-  const onBottomSheetChange = (prevIndex, index) => {
-    setShowCards(index === 1);
-  };
-
-  useEffect(() => {
-    carouselRef.current.snapToItem(currentActive);
-  }, [currentActive]);
-
   useEffect(() => {
     if (showCards) {
-      bottomSheet.current?.snapTo(1);
       fitMapToCurrentMarker();
     } else {
-      bottomSheet.current?.snapTo(0);
       fitMapToMarkers();
     }
   }, [showCards]);
 
+  console.log(markers);
+
   return (
     <View style={styles.root}>
       <MapView.Animated
+        onMapReady={() => setMapReady(true)}
         ref={mapRef}
         region={region}
         style={styles.map}
@@ -119,22 +117,17 @@ const Map = () => {
           setShowCards(false);
         }}
         onRegionChange={(newRegion) => region.setValue(newRegion)}
-        onUserLocationChange={(e) => {
-          setUserLocation(
-            (current) =>
-              current ?? {
-                latitude: e.nativeEvent.coordinate.latitude,
-                longitude: e.nativeEvent.coordinate.longitude,
-              },
-          );
-        }}
+        onUserLocationChange={(e) => setUserLocation(e.nativeEvent.coordinate)}
         showsUserLocation
         showsMyLocationButton
       >
         {markers.map((item, index) => (
           <Marker
-            key={`${item.lat}${item.lon}`}
-            coordinate={{ latitude: item.lat, longitude: item.lon }}
+            key={`${item.location.latitude}${item.location.longitude}`}
+            coordinate={{
+              latitude: item.location.latitude,
+              longitude: item.location.longitude,
+            }}
             onPress={() => {
               setShowCards(true);
               setCurrentActive(index);
@@ -142,48 +135,13 @@ const Map = () => {
           />
         ))}
       </MapView.Animated>
-
-      <BottomSheet
-        snapPoints={useMemo(() => [-1, 380], [])}
-        ref={bottomSheet}
-        animateOnMount
-        style={styles.carousel}
-        onAnimate={onBottomSheetChange}
-        onChange={(index) => onBottomSheetChange(-1, index)}
-      >
-        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-          <Carousel
-            ref={carouselRef}
-            layout="stack"
-            data={markers}
-            sliderWidth={Dimensions.get('screen').width}
-            itemWidth={Dimensions.get('screen').width}
-            onBeforeSnapToItem={(index) => setCurrentActive(index)}
-            renderItem={({ index }) => {
-              return (
-                <PostItem
-                  style={styles.card}
-                  title="Around the world in 80 days"
-                  author="Jules Verne"
-                  imageUrl="https://i.pinimg.com/originals/53/b0/0d/53b00dbc113138aa4c4aad36ddea5f73.jpg"
-                  description="Book is in good condition, bought a year ago. Looking to exchange for other Jules Verne booksBook is in good condition, bought a year ago. Looking to exchange for other Jules Verne booksBook is in good condition, bought a year ago. Looking to exchange for other Jules Verne books"
-                  distance="2.3"
-                  id={index}
-                />
-              );
-            }}
-          />
-          <View>
-            <Pagination
-              tappableDots
-              carouselRef={carouselRef}
-              containerStyle={{ paddingVertical: 16 }}
-              dotsLength={markers.length}
-              activeDotIndex={currentActive ?? -1}
-            />
-          </View>
-        </View>
-      </BottomSheet>
+      <MapBottomSheet
+        items={markers}
+        show={showCards}
+        setShow={setShowCards}
+        currentActiveIndex={currentActive}
+        onCurrentIndexChange={setCurrentActive}
+      />
     </View>
   );
 };

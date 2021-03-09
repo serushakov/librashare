@@ -58,10 +58,10 @@ const useImagePicker = () => {
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 0,
     });
 
     if (!result.cancelled) {
@@ -96,7 +96,7 @@ const useUploadMedia = () => {
       setLoading(false);
     } catch (e) {
       setLoading(false);
-      setError(e);
+      setError(e.response.data.message);
     }
   };
 
@@ -136,7 +136,7 @@ const CreatePost = ({ navigation, theme }) => {
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [location, setLocation] = useState();
 
-  const { uploadMedia, loading, data } = useUploadMedia();
+  const { uploadMedia, loading, data, error } = useUploadMedia();
 
   useEffect(() => {
     if (!loading && data) {
@@ -233,6 +233,10 @@ const CreatePost = ({ navigation, theme }) => {
                 />
               )}
             </View>
+
+            {error && (
+              <Text style={{ color: 'red', marginBottom: 16 }}>{error}</Text>
+            )}
 
             <Button
               disabled={!!errors}

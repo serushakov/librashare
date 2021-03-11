@@ -50,3 +50,13 @@ export async function getUsernameExists(username) {
 
   return response.json();
 }
+
+export async function getUserInfo(userId, token) {
+  const url = apiUrl(`/users/${userId}`);
+
+  const response = await axios.get(url, {
+    headers: { 'x-access-token': token },
+  });
+
+  return response.data;
+}

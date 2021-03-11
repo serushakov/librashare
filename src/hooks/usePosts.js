@@ -3,9 +3,9 @@ import { useQuery } from 'react-query';
 import { fetchMediaByTag } from '../api/media';
 import { appIdentifier } from '../utils';
 
-const usePosts = () => {
+const usePosts = (fileId) => {
   const { data = [], isLoading, isError } = useQuery(
-    'posts',
+    ['posts', fileId],
     () => fetchMediaByTag(appIdentifier),
     {
       refetchOnMount: true,

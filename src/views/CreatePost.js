@@ -18,6 +18,7 @@ import LocationPicker from '../components/LocationPicker';
 import { AuthContext } from '../contexts/AuthContext';
 import { postMedia, postTagMedia } from '../api/media';
 import { appIdentifier } from '../utils';
+import { Platform } from 'react-native';
 
 const defaultFieldState = {
   touched: false,
@@ -142,7 +143,7 @@ const CreatePost = ({ navigation, theme }) => {
     if (!loading && data) {
       clearFields();
       clearImage();
-      navigation.navigate('Map');
+      navigation.navigate('Map', data);
     }
   }, [loading, data]);
 
@@ -163,7 +164,7 @@ const CreatePost = ({ navigation, theme }) => {
       )}
       <ScrollView>
         <KeyboardAvoidingView
-          behavior="position"
+          behavior={Platform.OS === 'ios' ? 'position' : 'padding'}
           keyboardVerticalOffset={useHeaderHeight() + StatusBar.currentHeight}
         >
           <View

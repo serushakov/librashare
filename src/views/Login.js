@@ -4,14 +4,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
-import { Button } from 'react-native-elements';
+import { Button, withTheme } from 'react-native-elements';
 import { AuthContext } from '../contexts/AuthContext';
 import LoginForm from '../components/auth/LoginForm';
 import { getCurrentUser } from '../api/auth';
+import logo from '../images/logo.png';
 
-const Login = ({ navigation }) => {
+const Login = ({ navigation, theme }) => {
   const { setAuth } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
 
@@ -21,21 +23,25 @@ const Login = ({ navigation }) => {
       const userToken = await AsyncStorage.getItem('userToken');
 
       if (userToken) {
-        const response = await getCurrentUser(userToken);
+        try {
+          const response = await getCurrentUser(userToken);
 
-        if (response.status !== 200) {
-          setAuth(null, null);
+          if (response.status !== 200) {
+            setAuth(null, null);
+            setLoading(false);
+
+            return;
+          }
+
+          const user = await response.json();
+
+          setAuth(user, userToken);
+        } catch {
           setLoading(false);
-
-          return;
         }
-
-        const user = await response.json();
-
-        setAuth(user, userToken);
       }
+      setLoading(false);
     };
-    setLoading(false);
 
     getToken();
   }, []);
@@ -52,10 +58,14 @@ const Login = ({ navigation }) => {
           color="#FFFFFF"
         />
       )}
+      <Image source={logo} style={styles.logo} />
       <LoginForm onLoadingStateChange={setLoading} />
       <Button
         style={styles.noAccountButton}
-        titleStyle={styles.noAccountButtonText}
+        titleStyle={{
+          ...styles.noAccountButtonText,
+          color: theme.colors.platform.ios.primary,
+        }}
         title="I don't have an account"
         type="clear"
         onPress={() => navigation.navigate('Register')}
@@ -76,6 +86,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  logo: {
+    width: 150,
+    height: 150,
+    marginBottom: 32,
+  },
   container: {
     flex: 1,
     position: 'relative',
@@ -92,4 +107,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Login;
+export default withTheme(Login);

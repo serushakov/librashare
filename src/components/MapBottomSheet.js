@@ -1,8 +1,14 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { View, Dimensions, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
+import {
+  View,
+  Dimensions,
+  StyleSheet,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import Carousel, { Pagination } from 'react-native-snap-carousel';
-import { getImageUrl } from '../utils';
+import { calculateDistanceBetweenPoints, getImageUrl } from '../utils';
 import PostItem from './PostItem';
 
 const MapBottomSheet = ({
@@ -11,6 +17,8 @@ const MapBottomSheet = ({
   items,
   currentActiveIndex,
   onCurrentIndexChange,
+  onItemPress,
+  userLocation,
 }) => {
   const bottomSheet = useRef();
   const carouselRef = useRef(null);
@@ -33,6 +41,7 @@ const MapBottomSheet = ({
       ref={bottomSheet}
       animateOnMount
       style={styles.carousel}
+      enableContentPanningGesture={false}
       onAnimate={onBottomSheetChange}
       onChange={(index) => onBottomSheetChange(-1, index)}
     >
@@ -47,15 +56,26 @@ const MapBottomSheet = ({
           renderItem={({ index }) => {
             const item = items[index];
             return (
-              <PostItem
-                style={styles.card}
-                title={item.title}
-                author={item.author}
-                imageUrl={getImageUrl(item.filename)}
-                description={item.description}
-                distance="2.3"
-                id={index}
-              />
+              <Pressable onPress={() => onItemPress(item)}>
+                <PostItem
+                  style={styles.card}
+                  title={item.title}
+                  author={item.author}
+                  imageUrl={getImageUrl(item.filename)}
+                  description={item.description}
+                  distance={
+                    userLocation
+                      ? `${(
+                          calculateDistanceBetweenPoints(
+                            userLocation,
+                            item.location,
+                          ) / 1000
+                        ).toFixed(2)}`
+                      : '--'
+                  }
+                  id={index}
+                />
+              </Pressable>
             );
           }}
         />

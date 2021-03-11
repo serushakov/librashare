@@ -1,17 +1,16 @@
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps';
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import usePosts from '../hooks/usePosts';
-import MapBottomSheet from '../components/MapBottomSheet';
+import MapBottomSheet from './MapBottomSheet';
 
-const Map = () => {
+const Map = ({ navigation, params }) => {
   const [userLocation, setUserLocation] = useState();
   const [mapReady, setMapReady] = useState(false);
   const [currentActive, setCurrentActive] = useState(0);
   const mapRef = useRef(null);
   const [showCards, setShowCards] = useState(false);
-
-  const { data, isLoading, isError } = usePosts();
+  const { data, isLoading } = usePosts(params?.file_id);
 
   const markers = data;
 
@@ -23,29 +22,6 @@ const Map = () => {
       longitudeDelta: 0,
     }),
   ).current;
-
-  useEffect(() => {
-    if (!mapRef.current || !mapReady || !userLocation) return;
-
-    if (markers.length === 0 && userLocation) {
-      region
-        .timing({
-          useNativeDriver: false,
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        })
-        .start();
-    } else {
-      mapRef.current.fitToCoordinates([
-        ...markers.map((item) => ({
-          ...item.location,
-        })),
-        userLocation,
-      ]);
-    }
-  }, [markers, mapReady, !!userLocation]);
 
   const fitMapToCurrentMarker = () => {
     if (typeof currentActive !== 'number') return;
@@ -69,7 +45,7 @@ const Map = () => {
       {
         edgePadding: {
           top: 16,
-          bottom: 400,
+          bottom: Platform.OS === 'ios' ? 400 : 900,
           left: 16,
           right: 16,
         },
@@ -77,26 +53,21 @@ const Map = () => {
     );
   };
 
-  useEffect(fitMapToCurrentMarker, [currentActive]);
-
   const fitMapToMarkers = () => {
-    mapRef.current.fitToCoordinates(
-      markers.map((item) => ({
-        latitude: item.location.latitude,
-        longitude: item.location.longitude,
-      })),
-    );
+    if (!markers.length) return;
+
+    mapRef.current.fitToCoordinates(markers.map((item) => item.location));
   };
 
   useEffect(() => {
+    if (!mapRef.current || !mapReady || isLoading) return;
+
     if (showCards) {
       fitMapToCurrentMarker();
     } else {
-      fitMapToMarkers();
+      setTimeout(fitMapToMarkers, 200);
     }
-  }, [showCards]);
-
-  console.log(markers);
+  }, [showCards, markers, mapReady, isLoading, currentActive]);
 
   return (
     <View style={styles.root}>
@@ -117,8 +88,8 @@ const Map = () => {
           setShowCards(false);
         }}
         onRegionChange={(newRegion) => region.setValue(newRegion)}
+        showsUserLocation={mapReady}
         onUserLocationChange={(e) => setUserLocation(e.nativeEvent.coordinate)}
-        showsUserLocation
         showsMyLocationButton
       >
         {markers.map((item, index) => (
@@ -136,11 +107,13 @@ const Map = () => {
         ))}
       </MapView.Animated>
       <MapBottomSheet
+        userLocation={userLocation}
         items={markers}
         show={showCards}
         setShow={setShowCards}
         currentActiveIndex={currentActive}
         onCurrentIndexChange={setCurrentActive}
+        onItemPress={(item) => navigation.navigate('Post', item)}
       />
     </View>
   );

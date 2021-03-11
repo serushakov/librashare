@@ -5,6 +5,7 @@ export const AuthContext = React.createContext({
   token: null,
   isLoggedIn: false,
   setAuth: () => {},
+  logout: () => {},
 });
 
 const AuthProvider = ({ children }) => {
@@ -16,12 +17,18 @@ const AuthProvider = ({ children }) => {
     setToken(newToken);
   });
 
+  const logout = useCallback(() => {
+    setUser(undefined);
+    setToken(undefined);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={useMemo(() => ({
         user,
         token,
         setAuth,
+        logout,
         isLoggedIn: user && token,
       }))}
     >

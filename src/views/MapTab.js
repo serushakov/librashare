@@ -4,7 +4,7 @@ import { Button } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation, useTheme } from '@react-navigation/native';
 
-import Map from './Map';
+import Map from '../components/Map';
 import CreatePost from './CreatePost';
 
 const Stack = createStackNavigator();
@@ -27,7 +27,7 @@ const HeaderRightButton = () => {
 
 const MapTab = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator headerMode="screen">
       <Stack.Screen
         name="Map"
         options={{ headerRight: HeaderRightButton }}

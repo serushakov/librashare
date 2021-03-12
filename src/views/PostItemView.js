@@ -1,10 +1,14 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Image } from 'react-native';
-import { Platform } from 'react-native';
-import { Linking } from 'react-native';
-import { Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  ScrollView,
+  Image,
+  Platform,
+  Linking,
+  Dimensions,
+  SafeAreaView,
+} from 'react-native';
 import {
   Button,
   Divider,

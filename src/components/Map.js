@@ -10,9 +10,7 @@ const Map = ({ navigation, params }) => {
   const [currentActive, setCurrentActive] = useState(0);
   const mapRef = useRef(null);
   const [showCards, setShowCards] = useState(false);
-  const { data, isLoading } = usePosts(params?.file_id);
-
-  const markers = data;
+  const { data: markers, isLoading } = usePosts(params?.file_id);
 
   const region = useRef(
     new AnimatedRegion({
@@ -56,7 +54,19 @@ const Map = ({ navigation, params }) => {
   const fitMapToMarkers = () => {
     if (!markers.length) return;
 
-    mapRef.current.fitToCoordinates(markers.map((item) => item.location));
+    mapRef.current.fitToCoordinates(
+      markers
+        .filter((item) => {
+          // Filter out some outliers so that it does not focus on markers too far away
+          return (
+            item.location.latitude > 59.5 &&
+            item.location.latitude < 61 &&
+            item.location.longitude > 24 &&
+            item.location.longitude < 25
+          );
+        })
+        .map((item) => item.location),
+    );
   };
 
   useEffect(() => {

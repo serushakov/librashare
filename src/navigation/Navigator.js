@@ -1,6 +1,6 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import { ThemeProvider, UpdateTheme } from 'react-native-elements';
+import { ThemeProvider } from 'react-native-elements';
 import React, { useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import Login from '../views/Login';

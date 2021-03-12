@@ -1,8 +1,7 @@
 import AsyncStorage from '@react-native-community/async-storage';
 import React, { useContext } from 'react';
 import { View } from 'react-native';
-import { useTheme } from 'react-native-elements';
-import { Button } from 'react-native-elements';
+import { useTheme, Button } from 'react-native-elements';
 import { AuthContext } from '../contexts/AuthContext';
 
 const Profile = () => {

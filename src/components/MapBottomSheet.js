@@ -1,12 +1,6 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Pressable } from 'react-native';
-import {
-  View,
-  Dimensions,
-  StyleSheet,
-  TouchableWithoutFeedback,
-} from 'react-native';
+import { View, Dimensions, StyleSheet, Pressable } from 'react-native';
 import Carousel, { Pagination } from 'react-native-snap-carousel';
 import { calculateDistanceBetweenPoints, getImageUrl } from '../utils';
 import PostItem from './PostItem';
